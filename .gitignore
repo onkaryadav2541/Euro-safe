@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# IDE Settings
+.vscode/
+.idea/
+*.launch
+
+# OS Junk
+.DS_Store
+Thumbs.db
+
+# Docker volumes (if any)
+postgres_data/
