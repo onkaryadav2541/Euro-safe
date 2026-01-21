@@ -5,24 +5,30 @@ import com.student.eurosafe.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
 
-    // Constructor Injection (Best Practice)
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    // Feature 1: Register a new user
     public User registerUser(User user) {
-        // In the future, we will hash the password here
+        // 1. Check if username already exists
+        Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
+        
+        if (existingUser.isPresent()) {
+            // If found, stop and throw an error
+            throw new RuntimeException("Username '" + user.getUsername() + "' is already taken!");
+        }
+
+        // 2. If not found, save the new user
         return userRepository.save(user);
     }
 
-    // Feature 2: Get all users (for testing)
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
