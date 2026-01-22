@@ -2,6 +2,7 @@ package com.student.eurosafe.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer; // New Import
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,17 +13,19 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // The "Shredder"
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Disable CSRF for Postman testing
+            .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/users/**").permitAll() // Allow registration without login
-                .anyRequest().authenticated()
-            );
+                .requestMatchers("/api/users/**").permitAll() 
+                .anyRequest().authenticated() 
+            )
+            // NEW LINE HERE: This enables Postman to use "Basic Auth"
+            .httpBasic(Customizer.withDefaults()); 
         
         return http.build();
     }
