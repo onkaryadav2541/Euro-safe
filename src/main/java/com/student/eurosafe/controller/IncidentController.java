@@ -4,10 +4,8 @@ import com.student.eurosafe.entity.Incident;
 import com.student.eurosafe.entity.User;
 import com.student.eurosafe.repository.IncidentRepository;
 import com.student.eurosafe.repository.UserRepository;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
@@ -28,15 +26,12 @@ public class IncidentController {
     // 1. SOS Endpoint: Create a new alert
     @PostMapping
     public ResponseEntity<?> createIncident(@RequestBody Incident incident, Principal principal) {
-        // 'Principal' contains the info of the currently logged-in user.
-        // We use it to find out WHO is sending the SOS.
         String username = principal.getName();
-        
         Optional<User> userOptional = userRepository.findByUsername(username);
         
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            incident.setUser(user); // Link the incident to the user
+            incident.setUser(user);
             incident.setStatus("OPEN");
             
             Incident savedIncident = incidentRepository.save(incident);
@@ -57,5 +52,32 @@ public class IncidentController {
             return ResponseEntity.ok(incidents);
         }
         return ResponseEntity.status(404).build();
+    }
+
+    // 3. Resolve Incident: Mark as "Safe" (NEW FEATURE)
+    @PatchMapping("/{id}/resolve")
+    public ResponseEntity<?> resolveIncident(@PathVariable Long id, Principal principal) {
+        String username = principal.getName();
+        
+        // Find the incident by ID
+        Optional<Incident> incidentOptional = incidentRepository.findById(id);
+
+        if (incidentOptional.isEmpty()) {
+            return ResponseEntity.status(404).body("Incident not found");
+        }
+
+        Incident incident = incidentOptional.get();
+
+        // SECURITY CHECK: Ensure the user trying to resolve it actually OWNS the incident
+        // (We don't want User A closing User B's emergency alert!)
+        if (!incident.getUser().getUsername().equals(username)) {
+            return ResponseEntity.status(403).body("You are not allowed to modify this incident");
+        }
+
+        // Mark as resolved
+        incident.setStatus("RESOLVED");
+        incidentRepository.save(incident);
+
+        return ResponseEntity.ok("Incident marked as RESOLVED. You are safe.");
     }
 }
