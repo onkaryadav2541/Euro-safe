@@ -2,6 +2,8 @@ package com.student.eurosafe.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError; // New import
+import org.springframework.web.bind.MethodArgumentNotValidException; // New import
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -11,16 +13,33 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // This method catches the RuntimeException we threw yesterday
+    // --- NEW: Handles Validation Errors (Day 12/13) ---
+    // If a user forgets Latitude or Description, this runs.
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
+        
+        Map<String, String> errors = new HashMap<>();
+
+        // Loop through all the failures (e.g., "Latitude required")
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+
+        // Return the clean list with a 400 Bad Request
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    // --- OLD: Handles Generic Runtime Errors (From before) ---
+    // If "Username is taken", this runs.
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         Map<String, String> errorResponse = new HashMap<>();
         
-        // We take the message "Username is already taken" and put it in JSON
         errorResponse.put("message", ex.getMessage());
         errorResponse.put("status", "400");
 
-        // Return a 400 BAD REQUEST instead of 500 INTERNAL SERVER ERROR
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }
