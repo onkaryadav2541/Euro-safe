@@ -6,6 +6,7 @@ import com.student.eurosafe.repository.IncidentRepository;
 import com.student.eurosafe.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid; // <--- NEW IMPORT
 
 import java.security.Principal;
 import java.util.List;
@@ -24,8 +25,9 @@ public class IncidentController {
     }
 
     // 1. SOS Endpoint: Create a new alert
+    // We added @Valid here 👇 to trigger the checks (NotNull, NotBlank)
     @PostMapping
-    public ResponseEntity<?> createIncident(@RequestBody Incident incident, Principal principal) {
+    public ResponseEntity<?> createIncident(@Valid @RequestBody Incident incident, Principal principal) {
         String username = principal.getName();
         Optional<User> userOptional = userRepository.findByUsername(username);
         
@@ -78,10 +80,9 @@ public class IncidentController {
         return ResponseEntity.ok("Incident marked as RESOLVED. You are safe.");
     }
 
-    // 4. Community Safety: See all ACTIVE alerts (NEW for Day 11)
+    // 4. Community Safety: See all ACTIVE alerts
     @GetMapping("/active")
     public ResponseEntity<List<Incident>> getActiveIncidents() {
-        // Fetch only the incidents that are still happening
         List<Incident> activeIncidents = incidentRepository.findByStatus("OPEN");
         return ResponseEntity.ok(activeIncidents);
     }
